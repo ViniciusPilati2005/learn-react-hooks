@@ -1,50 +1,67 @@
-# React + TypeScript + Vite
+# React Hooks
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este projeto foi feito com o objetivo de entender melhor como funcionam os hooks do React
 
-Currently, two official plugins are available:
+## UseRef
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+useRef é um React Hook que permite referenciar um valor que não é necessário para renderização.
 
-## Expanding the ESLint configuration
+Mas o que isso significa?
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- A ref só será atualizada quando o componente desmontar e montar novamente.
+- A propriedade ref.current é mutável porque você pode alterar diretamente o valor dela sem disparar uma nova renderização.
 
-- Configure the top-level `parserOptions` property like this:
+  - Por exemplo:
+    - O useState é imutável, pois não há como atualiza-lo sem usar o disparador setState e causar uma nova renderização no componente.
+    - Alterar o valor de ref.current não causa re-renderização do componente.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+  ### Quando usar ref?
+
+  - Quando precisar salvar o estado anterior
+  - Quando precisar acessar um elemento do DOM diretamente.
+  - Armazenar Temporizadores ou Identificadores
+  - Armazenar Informações de Usuário ou Input
+
+  ### A diferença de uma ref para um estado:
+
+  - Conforme o estado muda seu valor com setState ele provoca re-renderizações
+  - Já a ref, apenas muda seu valor, que é atualizado quando o componente reemontar.
+
+
+## UseCallback
+
+UseCallback é um hook que faz a memoização de uma função, evitando que ela seja recriada a cada renderização. Geralmente utilizada quando a função possui cálculos caros ou quando a função é criada no pai, mas usada no filho do componente.
+
+Quando um estado ou prop muda, no mais comum dos casos, a função seria recriada novamente, causando custos de memória e performance
+
+Para evitar isso, o UseCallback memoiza essa função e só a recria novamente na montagem do componente ou quando o vetor de dependências mudar.
+
+#### Casos comuns de uso do useCallback
+Passagem de funções para componentes filhos
+
+- Evita que a função seja recriada em cada renderização, prevenindo re-renders desnecessários no filho.
+
+```
+const handleClick = useCallback(() => {
+  console.log("Botão clicado");
+}, []);
+
+<ChildComponent onClick={handleClick} />
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+Funções em useEffect (como dependências)
 ```
+const fetchData = useCallback(() => {
+  console.log("Buscando dados...");
+}, []);
+
+useEffect(() => {
+  fetchData();
+}, [fetchData]); // ✅ Não roda o efeito em re-renders desnecessários
+
+```
+
+#### ⚠️ Quando NÃO usar useCallback
+- Se a função não está sendo passada para um filho ou usada em useEffect, useCallback pode ser desnecessário.
+- Se a função já é estável por natureza (exemplo: const handleClick = () => {...} dentro do onClick direto).
+- Se o custo de memoização for maior que o benefício (evite otimizar prematuramente).
